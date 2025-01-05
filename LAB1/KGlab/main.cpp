@@ -1,6 +1,7 @@
 #ifndef UNICODE
-#define UNICODE
-#endif 
+	#define UNICODE		//чтобы все winapi-функции принимали строки wchar_t*, а не char* - это
+#endif					//юникод - двухбайтовая кодировка - нет проблем с русским.
+
 
 #include <windows.h>
 
@@ -13,7 +14,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 {
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"Window Class";
-
+	
     WNDCLASS wc = { };
 
     wc.lpfnWndProc = WindowProc;
