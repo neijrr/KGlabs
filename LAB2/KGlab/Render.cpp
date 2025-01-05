@@ -585,7 +585,8 @@ void Render(double delta_time)
 	glMaterialf(GL_FRONT, GL_SHININESS, sh);
 
 	//чтоб было красиво, без квадратиков (сглаживание освещения)
-	glShadeModel(GL_SMOOTH); //закраска по Гуро
+	glShadeModel(GL_SMOOTH); //закраска по Гуро      
+			   //(GL_SMOOTH - плоская закраска)
 
 	//============ РИСОВАТЬ ТУТ ==============
 
