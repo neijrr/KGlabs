@@ -131,14 +131,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GUItextRectangle.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyOGL.cpp" />
     <ClCompile Include="Render.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="GUItextRectangle.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="MyOGL.h" />
     <ClInclude Include="Render.h" />
     <ClInclude Include="stb_image.h" />

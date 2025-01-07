@@ -95,6 +95,8 @@ public:
 		return width;
 	}
 
+
+
 	void setHWND(HWND window);
 
 	void wheelEvent(float delta);

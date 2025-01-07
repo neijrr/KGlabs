@@ -1,23 +1,18 @@
 ﻿#include "Render.h"
-
 #include <Windows.h>
-
 #include <GL\GL.h>
 #include <GL\GLU.h>
-
 #include <iostream>
 #include <iomanip>
-#include <cmath>
-#include <tuple>
-#include <algorithm>
 #include <sstream>
-#include "Vector3.h"
 #include "GUItextRectangle.h"
+
+
+
 
 
 #ifdef _DEBUG
 #include <Debugapi.h> 
-
 struct debug_print
 {
 	template<class C>
@@ -46,369 +41,11 @@ struct debug_print
 //внутренняя логика "движка"
 #include "MyOGL.h"
 extern OpenGL gl;
+#include "Light.h"
+Light light;
+#include "Camera.h"
+Camera camera;
 
-
-
-
-//возвращает точку направление по 2д координатам окна в 3д мире
-std::tuple<double, double, double, double, double, double> getLookRay(int wndX, int wndY)
-{
-	GLint    viewport[4];    // параметры viewport-a.
-	GLdouble projection[16]; // матрица проекции.
-	GLdouble modelview[16];  // видовая матрица.
-	GLdouble wx, wy, wz;       // возвращаемые мировые координаты.
-
-	glGetIntegerv(GL_VIEWPORT, viewport);           // узнаём параметры viewport-a.
-	glGetDoublev(GL_PROJECTION_MATRIX, projection); // узнаём матрицу проекции.
-	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);   // узнаём видовую матрицу.
-	
-	
-	// переводим оконные координаты курсора в систему координат viewport-a.
-
-	double originX, originY, originZ; //точка в 3д мире под мышью
-	double directionX, directionY, directionZ; //направление клика
-
-	//Обратное проекцирование 2d->3d (wndX, wndY, 0) -> (wx,wy,wz)   0 - глубина внутрь экрана
-	gluUnProject(wndX, wndY, 0, modelview, projection, viewport, &wx, &wy, &wz);
-	originX = wx;
-	originY = wy;
-	originZ = wz;
-
-	//Обратное проекцирование 2d->3d (wndX, wndY, 1) -> (wx,wy,wz)   1 - глубина внутрь экрана
-	gluUnProject(wndX, wndY, 1, modelview, projection, viewport, &wx, &wy, &wz);
-	directionX = wx;
-	directionY = wy;
-	directionZ = wz;
-
-	directionX -= originX;
-	directionY -= originY;
-	directionZ -= originZ;
-
-	double length = sqrt(directionX * directionX + directionY * directionY + directionZ * directionZ);
-	
-	directionX /= length;
-	directionY /= length;
-	directionZ /= length;
-
-	return {originX, originY, originZ, directionX, directionY, directionZ};
-
-}
-
-class Camera
-{
-	double camDist = 5;
-
-	int camNz = 1;
-
-	double camX;
-	double camY;
-	double camZ;
-	int mouseX=-1 , mouseY=-1;
-
-	bool drag = false;
-
-public:
-	//начальные углы камеры
-	double _fi1 = 1;
-	double _fi2 = 0.5;
-
-	Camera()
-	{
-		caclulateCameraPos();
-	}
-
-	double distance()
-	{
-		return camDist;
-	}
-
-	int nZ() const
-	{
-		return camNz;
-	}
-	double x() const
-	{
-		return  camX;
-	}
-	double y() const
-	{
-		return  camY;
-	}
-	double z() const
-	{
-		return  camZ;
-	}
-	double fi1() const
-	{
-		return  _fi1;
-	}
-	double fi2() const
-	{
-		return  _fi2;
-	}
-	
-	void caclulateCameraPos()
-	{
-		camX = camDist * cos(_fi2) * cos(_fi1);
-		camY = camDist * cos(_fi2) * sin(_fi1);
-		camZ = camDist * sin(_fi2);
-		if (cos(_fi2) <= 0)
-			camNz = -1;
-		else
-			camNz = 1;
-	}
-	
-	void Zoom(OpenGL *sender, MouseWheelEventArg arg)
-	{
-		if (arg.value < 0 && camDist <= 1)
-			return;
-		if (arg.value > 0 && camDist >= 100)
-			return;
-		
-		camDist += 0.01*arg.value;
-
-		caclulateCameraPos();
-	}
-
-	void MouseMovie(OpenGL* sender, MouseEventArg arg)
-	{
-		if (OpenGL::isKeyPressed('G'))
-			return;
-
-		if (mouseX == -1)
-		{
-			mouseX = arg.x;
-			mouseY = arg.y;
-			return;
-		}
-		int dx = mouseX - arg.x;
-		int dy = mouseY - arg.y;
-		mouseX = arg.x;
-		mouseY = arg.y;		
-
-		if (drag)
-		{
-			_fi1 = _fi1 + 0.01 * dx;
-			_fi2 = _fi2 - 0.01 * dy;
-
-			caclulateCameraPos();
-		}
-	}
-	void MouseLeave(OpenGL* sender, MouseEventArg arg)
-	{
-		mouseX = -1;
-	}
-
-	void MouseStartDrag(OpenGL* sender, MouseEventArg arg)
-	{
-		drag = true;
-	}
-
-	void MouseStopDrag(OpenGL* sender, MouseEventArg arg)
-	{
-		drag = false;
-		mouseX = -1;		
-	}
-
-	void SetUpCamera()	
-	{
-		//сообщаем openGL настройки нашей камеры,
-		// где она находится и куда смотрит
-		// https://learn.microsoft.com/ru-ru/windows/win32/opengl/glulookat
-		gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 0, camNz);
-	}
-
-} camera;
-
-class Light
-{
-	double posX=1;
-	double posY=1;
-	double posZ=1;
-
-	bool drag = false;
-	bool from_camera = false;
-
-public:
-
-	double x() const
-	{
-		return  posX;
-	}
-	double y() const
-	{
-		return  posY;
-	}
-	double z() const
-	{
-		return  posZ;
-	}
-
-	void StartDrug(OpenGL* sender, KeyEventArg arg)
-	{
-		if (arg.key == 0x47) //клавиша G
-		{
-			drag = true;
-		}
-
-		if (arg.key == 0x46) //клавиша F
-		{
-			from_camera = true;
-		}
-
-
-	}
-
-	void StopDrug(OpenGL* sender, KeyEventArg arg)
-	{
-		if (arg.key == 0x47) //клавиша G
-		{
-			drag = false;
-		}
-		if (arg.key == 0x46) //клавиша F
-		{
-			from_camera = false;
-		}
-	}
-
-	void MoveLight(OpenGL* sender, MouseEventArg arg)
-	{
-		//двигаем свет по плоскости, в точку где мышь
-
-		if (drag)
-		{
-			int _x = arg.x;
-			int _y = gl.getHeight() - arg.y;
-
-			auto [oX, oY, oZ, dX, dY, dZ] = getLookRay(_x, _y);
-
-			if (!OpenGL::isKeyPressed(VK_LBUTTON)) //если не нажата левая кнопка мыши
-			{
-				double z = posZ;
-
-				double k = 0, x = 0, y = 0;
-				if (dZ == 0)
-					k = 0;
-				else
-					k = (z - oZ) / dZ;
-				
-				x = k * dX + oX;
-				y = k * dY + oY;
-
-				if (x * x + y * y > 2500) //не даем свету улететь далеко
-					return;
-
-				posX = x;
-				posY = y;
-				posZ = z;
-			}
-			else //если нажата
-			{
-				Vector3 o{ oX,oY,oZ };
-				Vector3 d{ dX,dY,dZ };
-				Vector3 z{ 0,0,1 };
-
-				Vector3 _top = d ^ Vector3(0, 0, camera.nZ()) ^ d;
-
-				//уравнение плоскости Ax+By+Cz+D=0  _top = (A,B, C)
-
-				//ищем D
-				double D = -_top.x() * oX - _top.y() * oY - _top.z() * oZ;
-
-				//ищем новый z света
-				if (_top.z() == 0)
-					posZ = 0;
-				else
-					posZ = std::clamp(-(_top.x() * posX + _top.y() * posY + D) / _top.z(), -20.0, 20.0);
-			}			
-		}
-	}
-
-	void SetUpLight()
-	{
-		if (from_camera)	//если нажата F, устанавливаем 
-							//позицию света в точку, откуда смотрим
-		{
-			posX = camera.x();
-			posY = camera.y();
-			posZ = camera.z();
-		}
-				
-		// массивы с параметрами источника света
-		// характеристики излучаемого света
-		// фоновое освещение (рассеянный свет)
-		GLfloat lamb[] = { 0.2, 0.2, 0.2, 0 };
-		// диффузная составляющая света
-		GLfloat ldif[] = { 0.7, 0.7, 0.7, 0 };
-		// зеркально отражаемая составляющая света
-		GLfloat lspec[] = { 1.0, 1.0, 1.0, 0 };
-		//координаты
-		GLfloat lposition[] = { posX, posY, posZ, 1. };
-
-		//сообщаем эти значения openGL.
-		glLightfv(GL_LIGHT0, GL_POSITION, lposition);
-		glLightfv(GL_LIGHT0, GL_AMBIENT, lamb);		
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, ldif);		
-		glLightfv(GL_LIGHT0, GL_SPECULAR, lspec);
-		glEnable(GL_LIGHT0);
-	}
-
-	void DrawLightGizmo()
-	{
-		//рисуем точку, отквда идет свет
-
-		//устанавливаем размер точки
-		GLfloat pointSize;
-		glGetFloatv(GL_POINT_SIZE, &pointSize);
-		glPointSize(10);
-
-
-		//отключаем тест глубины, чтобы точка рисовалась сквозь все.
-		glDisable(GL_DEPTH_TEST);
-
-		//отключаем свет и текстуры
-		glDisable(GL_TEXTURE_2D);		
-		glDisable(GL_LIGHTING);
-
-		//рисуем точку
-		glBegin(GL_POINTS);
-		glColor3d(1, 0.7, 0.1);
-		glVertex3d(posX, posY, posZ);
-		glEnd();
-
-		//возращаем размер точки как был до нам
-		glPointSize(pointSize);
-
-
-		//если нажата G - рисуем линии осей от света
-		if (!drag) return;
-
-		GLfloat lineWidth;
-		glGetFloatv(GL_LINE_WIDTH, &lineWidth);
-
-		glLineWidth(3.0);
-
-		glBegin(GL_LINES);
-			glColor3d(0, 0, 0.8);
-			glVertex3d(posX, posY, posZ);
-			glVertex3d(posX, posY, 0);
-
-			glColor3d(0.8, 0, 0);
-			glVertex3d(posX - 1, posY, 0);
-			glVertex3d(posX + 1, posY, 0);
-
-			glColor3d(0, 0.8, 0);
-			glVertex3d(posX, posY-1, 0);
-			glVertex3d(posX, posY+1, 0);
-
-		glEnd();
-
-		glLineWidth(lineWidth);
-		
-	}
-
-
-} light;
 
 bool texturing = true;
 bool lightning = true;
@@ -528,6 +165,8 @@ void initRender()
 	text.setSize(512, 180);
 	//========================================================
 
+
+	camera.setPosition(2, 1.5, 1.5);
 }
 
 void Render(double delta_time)
@@ -538,6 +177,11 @@ void Render(double delta_time)
 	//в этих функциях находятся OGLные функции
 	//которые устанавливают параметры источника света
 	//и моделвью матрицу, связанные с камерой.
+
+	if (gl.isKeyPressed('F')) //если нажата F - свет из камеры
+	{
+		light.SetPosition(camera.x(), camera.y(), camera.z());
+	}
 	camera.SetUpCamera();
 	light.SetUpLight();
 
