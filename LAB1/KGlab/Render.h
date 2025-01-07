@@ -1,1 +1,2 @@
-﻿void Render(double );
+﻿#pragma once
+void Render(double );
