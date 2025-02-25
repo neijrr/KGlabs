@@ -164,7 +164,7 @@ void initRender()
 	gl.KeyDownEvent.reaction(switchModes);
 	text.setSize(512, 180);
 	//========================================================
-
+	   
 
 	camera.setPosition(2, 1.5, 1.5);
 }
@@ -214,10 +214,10 @@ void Render(double delta_time)
 
 	//настройка материала, все что рисуется ниже будет иметь этот метериал.
 	//массивы с настройками материала
-	GLfloat amb[] = { 0.2, 0.2, 0.1, 1. };
-	GLfloat dif[] = { 0.4, 0.65, 0.5, 1. };
-	GLfloat spec[] = { 0.9, 0.8, 0.3, 1. };
-	GLfloat sh = 0.2f * 256;
+	float  amb[] = { 0.2, 0.2, 0.1, 1. };
+	float dif[] = { 0.4, 0.65, 0.5, 1. };
+	float spec[] = { 0.9, 0.8, 0.3, 1. };
+	float sh = 0.2f * 256;
 
 	//фоновая
 	glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
