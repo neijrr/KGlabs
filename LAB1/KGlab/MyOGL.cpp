@@ -226,7 +226,7 @@ void render_cycle ()
 
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-
+		glEnable(GL_DEPTH_TEST); //включаем z-буфер
 		
 
 		auto end_render = std::chrono::steady_clock::now();
