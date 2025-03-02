@@ -188,7 +188,7 @@ void OpenGL::setHWND(HWND window)
 void OpenGL::wheelEvent(float delta)
 {
 	MouseWheelEventArg arg{ delta };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this,arg]() {WheelEvent.exec(this, arg); });	
 }
 
@@ -196,70 +196,70 @@ void OpenGL::wheelEvent(float delta)
 void OpenGL::mouseMovie(short mX, short mY)
 {	
 	MouseEventArg arg{ mX, mY};
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseMovieEvent.exec(this, arg); });
 }
 
 void OpenGL::mouseLeave(short mX, short mY)
 {
 	MouseEventArg arg{ mX, mY };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseLeaveEvent.exec(this, arg); });
 }
 
 void OpenGL::mouseLdown(short mX, short mY)
 {
 	MouseEventArg arg{ mX, mY };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseLdownEvent.exec(this, arg); });
 }
 
 void OpenGL::mouseLup(short mX, short mY)
 {
 	MouseEventArg arg{ mX, mY };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseLupEvent.exec(this, arg); });
 }
 
 void OpenGL::mouseRdown(short mX, short mY)
 {
 	MouseEventArg arg{ mX, mY };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseRdownEvent.exec(this, arg); });
 }
 
 void OpenGL::mouseRup(short mX, short mY)
 {
 	MouseEventArg arg{ mX, mY };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseRupEvent.exec(this, arg); });
 }
 
 void OpenGL::mouseMdown(short mX, short mY)
 {
 	MouseEventArg arg{ mX, mY };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseMdownEvent.exec(this, arg); });
 }
 
 void OpenGL::mouseMup(short mX, short mY)
 {
 	MouseEventArg arg{ mX, mY };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {MouseMupEvent.exec(this, arg); });
 }
 
 void OpenGL::keyDown(int key)
 {	
 	KeyEventArg arg{ key };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {KeyDownEvent.exec(this, arg); });
 }
 
 void OpenGL::keyUp(int key)
 {
 	KeyEventArg arg{ key };
-	std::lock_guard lock(events_mutex);
+	std::lock_guard<std::mutex> lock(events_mutex);
 	events_for_render.push_back([this, arg]() {KeyUpEvent.exec(this, arg); });
 }
 
@@ -303,7 +303,7 @@ void OpenGL::render(double delta)
 
 	if (events_for_render.empty() == false)
 	{
-		std::lock_guard lock(events_mutex);
+		std::lock_guard<std::mutex> lock(events_mutex);
 		for (auto& x : events_for_render)
 			x();
 		events_for_render.clear();
