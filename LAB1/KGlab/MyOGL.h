@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <Windows.h>
+#include <windows.h>
 #include <atomic>
 
 #include "Event.h"
